@@ -18,9 +18,6 @@ def split_audio(input_file, chunk_length_minutes, output_format='mp3', progress_
         cancel_event (threading.Event, optional): Event to signal cancellation.
         normalize (bool, optional): Whether to normalize audio volume (default: False).
         output_folder (str, optional): Path to the output folder (default: None, uses current directory).
-
-    Returns:
-        bool: True if successful, False if an error occurred.
     """
 
     try:        
@@ -58,7 +55,6 @@ def split_audio(input_file, chunk_length_minutes, output_format='mp3', progress_
                 progress = (i + 1) / num_chunks * 100
                 progress_callback(progress)
 
-        return True
     except subprocess.CalledProcessError as e:
         print(f"Error during FFmpeg execution: {e}")
         raise
@@ -66,7 +62,7 @@ def split_audio(input_file, chunk_length_minutes, output_format='mp3', progress_
         print(f"An unexpected error occurred: {e}")
         raise
 
-class DragDropGUI:
+class GUI:
     def __init__(self, master):
         self.master = master
         self.master.title("Audio Splitter")
@@ -213,5 +209,5 @@ class DragDropGUI:
 
 if __name__ == "__main__":
     root = TkinterDnD.Tk()
-    gui = DragDropGUI(root)
+    gui = GUI(root)
     root.mainloop()
