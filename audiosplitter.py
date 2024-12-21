@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from tkinter import ttk
 from tkinterdnd2 import DND_FILES, TkinterDnD
+import sys
 
 AUDIO_EXTENSIONS = ('.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a', '.wma', '.aiff', '.alac', '.ape', '.opus', '.ra', '.rm', '.wv', '.tta', '.dts', '.ac3', '.amr', '.gsm', '.voc', '.mpc')
 
@@ -61,6 +62,22 @@ def split_audio(input_file, chunk_length_minutes, output_format='mp3', progress_
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         raise
+
+def get_ffmpeg_path():
+    if getattr(sys, 'frozen', False):
+        # Running in a PyInstaller bundle
+        return os.path.join(sys._MEIPASS, 'ffmpeg.exe')
+    else:
+        # Running in normal Python environment
+        return 'ffmpeg.exe'
+
+def get_ffprobe_path():
+    if getattr(sys, 'frozen', False):
+        # Running in a PyInstaller bundle
+        return os.path.join(sys._MEIPASS, 'ffprobe.exe')
+    else:
+        # Running in normal Python environment
+        return 'ffprobe.exe'
 
 class GUI:
     def __init__(self, master):
