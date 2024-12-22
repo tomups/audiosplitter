@@ -25,7 +25,7 @@ def split_audio(input_file, chunk_length_minutes, output_format='mp3', progress_
         chunk_length_seconds = chunk_length_minutes * 60
 
         # Get audio duration using FFprobe
-        duration_cmd = ['ffprobe', '-i', input_file, '-show_entries', 'format=duration', '-v', 'quiet', '-of', 'csv=p=0']
+        duration_cmd = [get_ffprobe_path(), '-i', input_file, '-show_entries', 'format=duration', '-v', 'quiet', '-of', 'csv=p=0']
         duration = float(subprocess.check_output(duration_cmd).decode('utf-8').strip())
         
         num_chunks = int(duration / chunk_length_seconds) + 1
@@ -43,7 +43,7 @@ def split_audio(input_file, chunk_length_minutes, output_format='mp3', progress_
             if output_folder:
                 output_file = os.path.join(output_folder, output_file)
 
-            ffmpeg_cmd = ['ffmpeg', '-y', '-i', input_file, '-ss', str(start_time), '-to', str(end_time)]
+            ffmpeg_cmd = [get_ffmpeg_path(), '-y', '-i', input_file, '-ss', str(start_time), '-to', str(end_time)]
             
             if normalize:
                 ffmpeg_cmd.extend(['-filter:a', 'speechnorm=e=12.5:r=0.0001:l=1'])
@@ -129,7 +129,6 @@ class GUI:
         self.output_folder_label.pack(side=tk.LEFT, padx=(0, 10))
 
         self.output_folder_var = tk.StringVar()
-        self.output_folder_var.set(os.getcwd())  # Default to current directory
         self.output_folder_entry = ttk.Entry(self.output_folder_frame, width=30, textvariable=self.output_folder_var)
         self.output_folder_entry.pack(side=tk.LEFT)
 
@@ -166,11 +165,19 @@ class GUI:
             return
 
         self.update_file_label()
+        # Set default output folder to input file location + /splitted
+        if not self.output_folder_var.get():
+            default_output = os.path.join(os.path.dirname(self.file_path), "splitted")
+            self.output_folder_var.set(default_output)
 
     def choose_file(self):
         self.file_path = filedialog.askopenfilename(filetypes=[("Audio Files", " ".join(f"*{ext}" for ext in AUDIO_EXTENSIONS))])
         if self.file_path:
             self.update_file_label()
+            # Set default output folder to input file location + /splitted
+            if not self.output_folder_var.get():
+                default_output = os.path.join(os.path.dirname(self.file_path), "splitted")
+                self.output_folder_var.set(default_output)
 
     def choose_output_folder(self):
         folder = filedialog.askdirectory()
@@ -187,6 +194,11 @@ class GUI:
         chunk_length_minutes = int(self.chunk_length_entry.get())
         normalize = self.normalize_var.get()
         output_folder = self.output_folder_var.get()
+        
+        # Create output directory if it doesn't exist
+        if output_folder and not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+            
         self.progress_bar["value"] = 0
         self.label.config(text="Processing...", foreground="black")
         self.start_button.pack_forget()
