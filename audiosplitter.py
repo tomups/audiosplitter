@@ -50,7 +50,10 @@ def split_audio(input_file, chunk_length_minutes, output_format='mp3', progress_
             
             ffmpeg_cmd.extend(['-c:a', 'libmp3lame', output_file])
             
-            subprocess.run(ffmpeg_cmd, check=True)
+            if os.name == 'nt':
+                subprocess.run(ffmpeg_cmd, creationflags=subprocess.CREATE_NO_WINDOW, check=True)
+            else:
+                subprocess.run(ffmpeg_cmd, check=True)
 
             if progress_callback:
                 progress = (i + 1) / num_chunks * 100
