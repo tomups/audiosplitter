@@ -32,7 +32,7 @@ jobs:
         
     - name: Build executable
       run: |
-        pyinstaller --onefile --add-binary "${{ steps.setup-ffmpeg.outputs.ffmpeg-path }}/ffmpeg.exe;." --add-binary "${{ steps.setup-ffmpeg.outputs.ffmpeg-path }}/ffprobe.exe;." audiosplitter.py
+        pyinstaller -F --additional-hooks-dir=. --add-binary "${{ steps.setup-ffmpeg.outputs.ffmpeg-path }}/ffmpeg.exe;." --add-binary "${{ steps.setup-ffmpeg.outputs.ffmpeg-path }}/ffprobe.exe;." audiosplitter.py
         
     - name: Upload artifact
       uses: actions/upload-artifact@v4
