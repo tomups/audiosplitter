@@ -5,8 +5,58 @@ from tkinter import filedialog, messagebox
 from tkinter import ttk
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import sys
+import shutil
 
 AUDIO_EXTENSIONS = ('.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a', '.wma', '.aiff', '.alac', '.ape', '.opus', '.ra', '.rm', '.wv', '.tta', '.dts', '.ac3', '.amr', '.gsm', '.voc', '.mpc')
+
+def check_ffmpeg_available():
+    """Check if ffmpeg and ffprobe are available"""
+    ffmpeg_path = get_ffmpeg_path()
+    ffprobe_path = get_ffprobe_path()
+    
+    if getattr(sys, 'frozen', False):
+        # In PyInstaller bundle, check if files exist
+        if not os.path.exists(ffmpeg_path):
+            raise FileNotFoundError("ffmpeg.exe not found in application directory")
+        if not os.path.exists(ffprobe_path):
+            raise FileNotFoundError("ffprobe.exe not found in application directory")
+    else:
+        # In normal Python environment, check if in PATH
+        if not shutil.which('ffmpeg.exe'):
+            raise FileNotFoundError("ffmpeg.exe not found in PATH")
+        if not shutil.which('ffprobe.exe'):
+            raise FileNotFoundError("ffprobe.exe not found in PATH")
+
+def show_ffmpeg_error(master):
+    error_window = tk.Toplevel(master)
+    error_window.title("Error")
+    error_window.geometry("400x250")
+    
+    msg = "FFmpeg not found!\n\nDownload it from:\n"
+    link = "https://github.com/BtbN/FFmpeg-Builds/releases"
+    instructions = "\n\nExtract ffmpeg.exe and ffprobe.exe from the zip file\nand place them in the same folder as this program."
+    
+    label = tk.Label(error_window, text=msg, justify=tk.CENTER)
+    label.pack(pady=10)
+    
+    link_label = tk.Label(error_window, text=link, fg="blue", cursor="hand2")
+    link_label.pack()
+    link_label.bind("<Button-1>", lambda e: os.startfile(link))
+    
+    inst_label = tk.Label(error_window, text=instructions, justify=tk.CENTER)
+    inst_label.pack(pady=10)    
+    
+    def close_program():
+        error_window.destroy()
+        sys.exit()
+        
+    close_button = tk.Button(error_window, text="Close", command=close_program)
+    close_button.pack(pady=1)
+    
+    # Prevent interaction with main window
+    error_window.transient(master)
+    error_window.grab_set()
+    error_window.wait_window()
 
 def split_audio(input_file, chunk_length_minutes, output_format='mp3', progress_callback=None, cancel_event=None, normalize=False, output_folder=None):
     """Splits an audio file into equal-length chunks.
@@ -22,6 +72,8 @@ def split_audio(input_file, chunk_length_minutes, output_format='mp3', progress_
     """
 
     try:        
+        check_ffmpeg_available()
+        
         chunk_length_seconds = chunk_length_minutes * 60
 
         # Get audio duration using FFprobe
@@ -88,6 +140,11 @@ class GUI:
         self.master.title("Audio Splitter")
         self.master.geometry("400x420")
         self.master.configure(bg="#f0f0f0")
+        # Check for ffmpeg/ffprobe availability on startup
+        try:
+            check_ffmpeg_available()
+        except FileNotFoundError as e:
+            show_ffmpeg_error(self.master)
 
         self.style = ttk.Style()
         self.style.theme_use("clam")
