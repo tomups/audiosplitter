@@ -6,6 +6,7 @@ from tkinter import ttk
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import sys
 import shutil
+import webbrowser
 
 AUDIO_EXTENSIONS = ('.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a', '.wma', '.aiff', '.alac', '.ape', '.opus', '.ra', '.rm', '.wv', '.tta', '.dts', '.ac3', '.amr', '.gsm', '.voc', '.mpc')
 
@@ -17,15 +18,15 @@ def check_ffmpeg_available():
     if getattr(sys, 'frozen', False):
         # In PyInstaller bundle, check if files exist
         if not os.path.exists(ffmpeg_path):
-            raise FileNotFoundError("ffmpeg.exe not found in application directory")
+            raise FileNotFoundError(f"{os.path.basename(ffmpeg_path)} not found in application directory")
         if not os.path.exists(ffprobe_path):
-            raise FileNotFoundError("ffprobe.exe not found in application directory")
+            raise FileNotFoundError(f"{os.path.basename(ffprobe_path)} not found in application directory")
     else:
         # In normal Python environment, check if in PATH
-        if not shutil.which('ffmpeg.exe'):
-            raise FileNotFoundError("ffmpeg.exe not found in PATH")
-        if not shutil.which('ffprobe.exe'):
-            raise FileNotFoundError("ffprobe.exe not found in PATH")
+        if not shutil.which(ffmpeg_path):
+            raise FileNotFoundError(f"{ffmpeg_path} not found in PATH")
+        if not shutil.which(ffprobe_path):
+            raise FileNotFoundError(f"{ffprobe_path} not found in PATH")
 
 def show_ffmpeg_error(master):
     error_window = tk.Toplevel(master)
@@ -35,13 +36,15 @@ def show_ffmpeg_error(master):
     msg = "FFmpeg not found!\n\nDownload it from:\n"
     link = "https://github.com/BtbN/FFmpeg-Builds/releases"
     instructions = "\n\nExtract ffmpeg.exe and ffprobe.exe from the zip file\nand place them in the same folder as this program."
+    if os.name != 'nt':
+        instructions = "\n\nInstall FFmpeg using your system package manager\nand make sure ffmpeg and ffprobe are in PATH."
     
     label = tk.Label(error_window, text=msg, justify=tk.CENTER)
     label.pack(pady=10)
     
     link_label = tk.Label(error_window, text=link, fg="blue", cursor="hand2")
     link_label.pack()
-    link_label.bind("<Button-1>", lambda e: os.startfile(link))
+    link_label.bind("<Button-1>", lambda e: webbrowser.open(link))
     
     inst_label = tk.Label(error_window, text=instructions, justify=tk.CENTER)
     inst_label.pack(pady=10)    
@@ -119,20 +122,22 @@ def split_audio(input_file, chunk_length_minutes, output_format='mp3', progress_
         raise
 
 def get_ffmpeg_path():
+    executable = 'ffmpeg.exe' if os.name == 'nt' else 'ffmpeg'
     if getattr(sys, 'frozen', False):
         # Running in a PyInstaller bundle
-        return os.path.join(sys._MEIPASS, 'ffmpeg.exe')
+        return os.path.join(sys._MEIPASS, executable)
     else:
         # Running in normal Python environment
-        return 'ffmpeg.exe'
+        return executable
 
 def get_ffprobe_path():
+    executable = 'ffprobe.exe' if os.name == 'nt' else 'ffprobe'
     if getattr(sys, 'frozen', False):
         # Running in a PyInstaller bundle
-        return os.path.join(sys._MEIPASS, 'ffprobe.exe')
+        return os.path.join(sys._MEIPASS, executable)
     else:
         # Running in normal Python environment
-        return 'ffprobe.exe'
+        return executable
 
 class GUI:
     def __init__(self, master):
